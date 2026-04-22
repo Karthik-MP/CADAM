@@ -1,16 +1,40 @@
-import * as Sentry from 'npm:@sentry/deno';
+// Lightweight Sentry shim: avoid top-level `npm:` imports so local
+// Supabase edge runtime doesn't fail to boot when npm resolution isn't
+// available. In production we'll attempt to dynamically import Sentry.
 
-// Initialize Sentry with environment-specific configuration
+// deno-lint-ignore no-explicit-any
+let Sentry: any = undefined;
+
 export function initSentry() {
-  Sentry.init({
-    dsn: Deno.env.get('SENTRY_DSN') ?? '',
-    defaultIntegrations: false,
-    tracesSampleRate: 0.1,
-    environment: Deno.env.get('ENVIRONMENT') ?? 'development',
-  });
+  const env = Deno.env.get('ENVIRONMENT') ?? 'development';
+  if (env === 'local' || !Deno.env.get('SENTRY_DSN')) {
+    // No-op in local development or when DSN is not provided
+    Sentry = undefined;
+    return;
+  }
+
+  // Dynamically import to avoid top-level import errors in runtimes
+  // that don't support npm: specifier resolution during build.
+  (async () => {
+    try {
+      const mod = await import('npm:@sentry/deno');
+      Sentry = mod;
+      Sentry.init({
+        dsn: Deno.env.get('SENTRY_DSN') ?? '',
+        defaultIntegrations: false,
+        tracesSampleRate: 0.1,
+        environment: env,
+      });
+    } catch (err) {
+      // If import fails, leave Sentry undefined and continue.
+      console.warn('Sentry init skipped:', err?.message ?? err);
+      Sentry = undefined;
+    }
+  })();
 }
 
-// Log errors with context for edge function failures
+// Log errors with context for edge function failures. Always log to
+// console; optionally forward to Sentry when available.
 export function logError(
   error: Error | unknown,
   context: {
@@ -24,23 +48,28 @@ export function logError(
   const errorMessage = error instanceof Error ? error.message : 'Unknown error';
   const errorStack = error instanceof Error ? error.stack : undefined;
 
-  Sentry.captureException(error, {
-    tags: {
-      function: context.functionName,
-      statusCode: context.statusCode.toString(),
-      environment: Deno.env.get('ENVIRONMENT') ?? 'development',
-    },
-    extra: {
-      userId: context.userId,
-      conversationId: context.conversationId,
-      errorMessage,
-      errorStack,
-      ...context.additionalContext,
-    },
-    level: context.statusCode >= 500 ? 'error' : 'warning',
-  });
+  if (Sentry && typeof Sentry.captureException === 'function') {
+    try {
+      Sentry.captureException(error, {
+        tags: {
+          function: context.functionName,
+          statusCode: context.statusCode.toString(),
+          environment: Deno.env.get('ENVIRONMENT') ?? 'development',
+        },
+        extra: {
+          userId: context.userId,
+          conversationId: context.conversationId,
+          errorMessage,
+          errorStack,
+          ...context.additionalContext,
+        },
+        level: context.statusCode >= 500 ? 'error' : 'warning',
+      });
+    } catch (e) {
+      console.warn('Sentry capture failed:', e?.message ?? e);
+    }
+  }
 
-  // Also log to console for immediate debugging
   console.error(`[${context.functionName}] Error (${context.statusCode}):`, {
     error: errorMessage,
     userId: context.userId,

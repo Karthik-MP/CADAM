@@ -965,7 +965,9 @@ export const processUserModelForPrint = async (
     binary: true,
   } as STLExporterOptionsBinary);
 
-  const blob = new Blob([result], { type: 'application/octet-stream' });
+  const blob = new Blob([result.buffer as ArrayBuffer], {
+    type: 'application/octet-stream',
+  });
   const file = new File([blob], `${generateFilename()}_PRINTABLE.stl`, {
     type: 'application/octet-stream',
   });

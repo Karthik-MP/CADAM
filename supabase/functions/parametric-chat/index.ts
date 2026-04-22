@@ -20,9 +20,11 @@ const PARAMETRIC_TOKEN_COST = 5;
 
 initSentry();
 
-// OpenRouter API configuration
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? '';
+// LLM API configuration
+const OPENROUTER_API_URL =
+  Deno.env.get('LLM_API_URL') ?? 'https://model.3ya.io/v1/chat/completions';
+const OPENROUTER_API_KEY =
+  Deno.env.get('LLM_API_KEY') ?? Deno.env.get('OPENROUTER_API_KEY') ?? '';
 
 // Helper to stream updated assistant message rows
 function streamMessage(

@@ -18,6 +18,7 @@ import posthog from 'posthog-js';
 import * as Sentry from '@sentry/react';
 import { useSendContentMutation } from '@/services/messageService';
 import { useProfile } from '@/services/profileService';
+import { useParametricModels } from '@/hooks/useParametricModels';
 
 export function PromptView() {
   const navigate = useNavigate();
@@ -38,16 +39,28 @@ export function PromptView() {
   }, [profile?.full_name, user, isProfileLoading]);
 
   const [type, setType] = useState<'parametric' | 'creative'>('parametric');
+  const { data: remoteParametricModels } = useParametricModels();
+  const defaultParametricModel: Model =
+    remoteParametricModels?.[0]?.id ?? 'google/gemini-3.1-pro-preview';
 
   const [model, setModel] = useState<Model>('google/gemini-3.1-pro-preview');
 
+  useEffect(() => {
+    if (
+      remoteParametricModels &&
+      remoteParametricModels.length > 0 &&
+      type === 'parametric'
+    ) {
+      setModel(remoteParametricModels[0].id as Model);
+    }
+  }, [remoteParametricModels, type]);
+
   const handleTypeChange = (newType: 'parametric' | 'creative') => {
     setType(newType);
-    // Reset model to the default for the new type
     if (newType === 'creative') {
       setModel('quality');
     } else {
-      setModel('google/gemini-3.1-pro-preview');
+      setModel(defaultParametricModel);
     }
   };
 

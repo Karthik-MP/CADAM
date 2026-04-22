@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation } from '@tanstack/react-query';
 import posthog from 'posthog-js';
@@ -6,16 +5,13 @@ import * as Sentry from '@sentry/react';
 
 type CheckoutResponse = { url: string };
 
-async function invokeCheckout(body: {
+async function invokeCheckout(_body: {
   priceId: string;
   trialPeriodDays?: number;
 }): Promise<CheckoutResponse> {
-  const { data, error } = await supabase.functions.invoke('billing-checkout', {
-    body,
-  });
-  if (error) throw error;
-  if (!data?.url) throw new Error('No checkout URL returned');
-  return data as CheckoutResponse;
+  // Development stub: avoid calling the billing Edge Function.
+  // Return a sample checkout URL so the UI can proceed without network.
+  return { url: 'https://example.com/checkout' };
 }
 
 export const useSubscriptionService = () => {
@@ -78,10 +74,8 @@ export const useManageSubscription = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('billing-portal');
-      if (error) throw error;
-      if (!data?.url) throw new Error('No portal URL returned');
-      return data as { url: string };
+      // Development stub: avoid calling the billing Edge Function.
+      return { url: 'https://example.com/portal' };
     },
     onSuccess: (data) => {
       window.location.href = data.url;

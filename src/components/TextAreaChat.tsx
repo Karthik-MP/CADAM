@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn, CREATIVE_MODELS, PARAMETRIC_MODELS } from '@/lib/utils';
+import { useParametricModels } from '@/hooks/useParametricModels';
 import { Content, CreativeModel, MeshFileType, Model } from '@shared/types';
 import {
   shouldShowPolygonControls,
@@ -647,12 +648,14 @@ function TextAreaChat({
     },
   };
 
+  const { data: remoteParametricModels } = useParametricModels();
+
   const memoizedModels = useMemo(() => {
     if (type === 'creative') {
       return CREATIVE_MODELS;
     }
-    return PARAMETRIC_MODELS;
-  }, [type]);
+    return remoteParametricModels ?? PARAMETRIC_MODELS;
+  }, [type, remoteParametricModels]);
 
   // ------------------------------------------------------------
   // Placeholder – Typed-out Animation

@@ -4,12 +4,16 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { Anthropic } from 'npm:@anthropic-ai/sdk';
 import { corsHeaders } from '../_shared/cors.ts';
 import 'jsr:@std/dotenv/load';
 import { getAnonSupabaseClient } from '../_shared/supabaseClient.ts';
 import { Content } from '@shared/types.ts';
 import { formatCreativeUserMessage } from '../_shared/messageUtils.ts';
+
+const LLM_API_URL =
+  Deno.env.get('LLM_API_URL') ?? 'https://model.3ya.io/v1/chat/completions';
+const LLM_API_KEY =
+  Deno.env.get('LLM_API_KEY') ?? Deno.env.get('OPENROUTER_API_KEY') ?? '';
 
 const TITLE_SYSTEM_PROMPT = `You are a helpful assistant that generates concise, descriptive titles for conversation threads based on the first message in the thread.
 The messages can be text, images, or screenshots of 3d models.
@@ -94,32 +98,30 @@ Deno.serve(async (req) => {
     conversationId,
   );
 
-  // Initialize Anthropic client for AI interactions
-  const anthropic = new Anthropic({
-    apiKey: Deno.env.get('ANTHROPIC_API_KEY') ?? '',
-  });
-
   try {
-    // Configure Claude API call
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 100,
-      system: TITLE_SYSTEM_PROMPT,
-      messages: [userMessage],
+    const llmResponse = await fetch(LLM_API_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${LLM_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'anthropic/claude-haiku-4-5',
+        max_tokens: 100,
+        messages: [
+          { role: 'system', content: TITLE_SYSTEM_PROMPT },
+          userMessage,
+        ],
+      }),
     });
+
+    const data = await llmResponse.json();
 
     // Extract title from response
     let title = 'New Conversation';
-    if (Array.isArray(response.content) && response.content.length > 0) {
-      const lastContent = response.content[response.content.length - 1];
-      if (lastContent.type === 'text') {
-        title = lastContent.text.trim();
-
-        // Ensure title is not too long for the database
-        if (title.length > 255) {
-          title = title.substring(0, 252) + '...';
-        }
-      }
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    if (text) {
+      title = text.length > 255 ? text.substring(0, 252) + '...' : text;
     }
 
     if (

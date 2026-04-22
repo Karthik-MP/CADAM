@@ -31,3 +31,7 @@ dist-ssr
 # other secret files
 .env.local
 .env.langfuse
+.env.production
+supabase/gotrue.env
+supabase/.env
+supabase/functions/.env

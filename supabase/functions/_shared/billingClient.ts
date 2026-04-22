@@ -1,6 +1,7 @@
-// HTTP client for the shared adam-billing service. Mirrors
-// onshape-extension/src/lib/billing/client.ts so CADAM and onshape behave
-// identically against the same endpoints.
+// Stub billing client for local development.
+// Replaces calls to an external adam-billing service with local no-op
+// implementations that return sensible defaults so callers continue to work
+// without an external dependency.
 
 export type SubscriptionLevel = 'standard' | 'pro';
 
@@ -66,63 +67,43 @@ export type BillingProduct = {
 export class BillingClientError extends Error {
   readonly status: number;
   readonly body: unknown;
-  constructor(message: string, status: number, body: unknown) {
+  constructor(message: string, status = 502, body: unknown = undefined) {
     super(message);
     this.status = status;
     this.body = body;
   }
 }
 
-const baseUrl = (): string => {
-  const url = Deno.env.get('BILLING_SERVICE_URL');
-  if (!url) throw new Error('BILLING_SERVICE_URL is not set');
-  return url.replace(/\/$/, '');
-};
+// Sample product data used by the stub.
+const sampleSubscriptions: BillingProduct[] = [
+  {
+    id: 'sub-monthly',
+    stripeProductId: 'prod_sub',
+    stripePriceId: 'price_month',
+    productType: 'subscription',
+    subscriptionLevel: 'standard',
+    tokenAmount: 100,
+    name: 'Standard Monthly',
+    priceCents: 999,
+    interval: 'month',
+    active: true,
+  },
+];
 
-const apiKey = (): string => {
-  const key = Deno.env.get('BILLING_SERVICE_KEY');
-  if (!key) throw new Error('BILLING_SERVICE_KEY is not set');
-  return key;
-};
-
-type CallOptions = {
-  allowStatus?: number[];
-};
-
-const call = async <T>(
-  method: 'GET' | 'POST',
-  path: string,
-  body?: unknown,
-  options?: CallOptions,
-): Promise<T> => {
-  const res = await fetch(`${baseUrl()}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${apiKey()}`,
-      'Content-Type': 'application/json',
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const text = await res.text();
-  let parsed: unknown;
-  if (text) {
-    try {
-      parsed = JSON.parse(text);
-    } catch {
-      parsed = text;
-    }
-  }
-  if (!res.ok && !options?.allowStatus?.includes(res.status)) {
-    throw new BillingClientError(
-      `billing ${method} ${path} -> ${res.status}`,
-      res.status,
-      parsed,
-    );
-  }
-  return parsed as T;
-};
-
-const enc = (email: string): string => encodeURIComponent(email.toLowerCase());
+const samplePacks: BillingProduct[] = [
+  {
+    id: 'pack-small',
+    stripeProductId: 'prod_pack',
+    stripePriceId: 'price_pack',
+    productType: 'pack',
+    subscriptionLevel: null,
+    tokenAmount: 10,
+    name: 'Small Pack',
+    priceCents: 199,
+    interval: null,
+    active: true,
+  },
+];
 
 type ConsumeBody = {
   tokens: number;
@@ -161,36 +142,66 @@ export type CancelSubscriptionResult =
   | { canceled: false; reason: 'no_subscription' | 'already_canceled' };
 
 export const billing = {
-  getStatus: (email: string) =>
-    call<BillingStatus>('GET', `/v1/users/${enc(email)}/status`),
+  // deno-lint-ignore require-await
+  getStatus: async (_email: string): Promise<BillingStatus> => ({
+    user: { hasTrialed: false },
+    subscription: null,
+    tokens: { free: 0, subscription: 0, purchased: 0, total: 0 },
+  }),
 
-  consume: (email: string, body: ConsumeBody) =>
-    call<ConsumeResult>('POST', `/v1/users/${enc(email)}/consume`, body, {
-      allowStatus: [422],
-    }),
+  // deno-lint-ignore require-await
+  consume: async (
+    _email: string,
+    body: ConsumeBody,
+  ): Promise<ConsumeResult> => {
+    return {
+      ok: true,
+      tokensDeducted: body.tokens,
+      freeBalance: 0,
+      subscriptionBalance: 0,
+      purchasedBalance: 0,
+      totalBalance: 0,
+    };
+  },
 
-  refund: (email: string, body: RefundBody) =>
-    call<RefundResult>('POST', `/v1/users/${enc(email)}/refund`, body),
+  // deno-lint-ignore require-await
+  refund: async (_email: string, body: RefundBody): Promise<RefundResult> => ({
+    ok: true,
+    tokensRefunded: body.tokens,
+    source: 'purchased',
+    freeBalance: 0,
+    subscriptionBalance: 0,
+    purchasedBalance: 0,
+    totalBalance: 0,
+  }),
 
-  createCheckout: (email: string, body: CheckoutBody) =>
-    call<{ url: string }>('POST', `/v1/users/${enc(email)}/checkout`, body),
+  // deno-lint-ignore require-await
+  createCheckout: async (_email: string, _body: CheckoutBody) => ({
+    url: 'https://example.com/checkout',
+  }),
 
-  createPortal: (email: string, body: { returnUrl: string }) =>
-    call<{ url: string }>('POST', `/v1/users/${enc(email)}/portal`, body),
+  // deno-lint-ignore require-await
+  createPortal: async (_email: string, _body: { returnUrl: string }) => ({
+    url: 'https://example.com/portal',
+  }),
 
-  cancelSubscription: (email: string, body: CancelSubscriptionBody = {}) =>
-    call<CancelSubscriptionResult>(
-      'POST',
-      `/v1/users/${enc(email)}/cancel-subscription`,
-      body,
-    ),
+  // deno-lint-ignore require-await
+  cancelSubscription: async (
+    _email: string,
+    _body: CancelSubscriptionBody = {},
+  ) =>
+    ({
+      canceled: false,
+      reason: 'no_subscription',
+    }) as CancelSubscriptionResult,
 
-  getProductsByType: (type: 'subscription' | 'pack') =>
-    call<BillingProduct[]>('GET', `/v1/products?type=${type}`),
+  // deno-lint-ignore require-await
+  getProductsByType: async (type: 'subscription' | 'pack') =>
+    type === 'subscription' ? sampleSubscriptions : samplePacks,
 
-  getAllProducts: () =>
-    call<{ subscriptions: BillingProduct[]; packs: BillingProduct[] }>(
-      'GET',
-      '/v1/products',
-    ),
+  // deno-lint-ignore require-await
+  getAllProducts: async () => ({
+    subscriptions: sampleSubscriptions,
+    packs: samplePacks,
+  }),
 };

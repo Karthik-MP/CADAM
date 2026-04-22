@@ -4,6 +4,17 @@
 # working directory name when running `supabase init`.
 project_id = "cadam"
 
+[auth]
+site_url = "http://localhost:3000/cadam"
+additional_redirect_urls = [
+  "http://localhost:3000",
+  "http://localhost:3000/cadam",
+  "http://localhost:3000/cadam/",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3000/cadam",
+  "http://127.0.0.1:3000/cadam/",
+]
+
 [auth.email]
 enable_signup = true
 

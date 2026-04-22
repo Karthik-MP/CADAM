@@ -1,4 +1,3 @@
-import { supabase } from '@/lib/supabase';
 import { useQuery } from '@tanstack/react-query';
 
 export type SubscriptionLevel = 'standard' | 'pro';
@@ -16,16 +15,43 @@ export type BillingProduct = {
   active: boolean;
 };
 
+// Static sample product data for local development (no external billing calls).
+export const sampleSubscriptions: BillingProduct[] = [
+  {
+    id: 'sub-monthly',
+    stripeProductId: 'prod_sub',
+    stripePriceId: 'price_month',
+    productType: 'subscription',
+    subscriptionLevel: 'standard',
+    tokenAmount: 100,
+    name: 'Standard Monthly',
+    priceCents: 999,
+    interval: 'month',
+    active: true,
+  },
+];
+
+export const samplePacks: BillingProduct[] = [
+  {
+    id: 'pack-small',
+    stripeProductId: 'prod_pack',
+    stripePriceId: 'price_pack',
+    productType: 'pack',
+    subscriptionLevel: null,
+    tokenAmount: 10,
+    name: 'Small Pack',
+    priceCents: 199,
+    interval: null,
+    active: true,
+  },
+];
+
 export function useSubscriptionProducts() {
   return useQuery<BillingProduct[]>({
     queryKey: ['billing', 'products', 'subscription'],
     queryFn: async () => {
-      const { data, error } = await supabase.functions.invoke(
-        'billing-products?type=subscription',
-        { method: 'GET' },
-      );
-      if (error) throw error;
-      return (data as BillingProduct[]) ?? [];
+      // Return static local products — avoids contacting an external billing API
+      return sampleSubscriptions;
     },
   });
 }

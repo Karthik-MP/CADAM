@@ -57,18 +57,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Poll adam-billing for subscription state + token balances. 30s cadence
-  // matches the prior user_extradata poll — adam-billing is the source of
-  // truth; no local realtime channel anymore.
+  // Local stub for billing status in development — avoids contacting
+  // external adam-billing / Edge Function. Keeps the shape expected by
+  // the rest of the app while eliminating network calls.
+  const sampleBillingStatus: BillingStatus = {
+    user: { hasTrialed: false },
+    subscription: null,
+    tokens: { free: 9999, subscription: 0, purchased: 0, total: 9999 },
+  };
+
   const { data: billing, isLoading: isBillingLoading } = useQuery({
     queryKey: ['billing', 'status'],
     enabled: !!user,
-    refetchInterval: 30000,
-    queryFn: async (): Promise<BillingStatus> => {
-      const { data, error } = await supabase.functions.invoke('billing-status');
-      if (error) throw error;
-      return data as BillingStatus;
-    },
+    // No periodic network refetch — return local data only.
+    refetchOnWindowFocus: false,
+    queryFn: async (): Promise<BillingStatus> => sampleBillingStatus,
+    initialData: sampleBillingStatus,
   });
 
   // Fetch user's profile data directly (avoiding circular dependency)

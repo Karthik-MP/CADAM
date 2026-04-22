@@ -29,11 +29,11 @@ export function SignUpView() {
   const { mutate: signInWithGoogle, isPending: isSigningInWithGoogle } =
     useMutation({
       mutationFn: async () => {
-        // Use Supabase's built-in redirectTo parameter with validated URL
+        const base = import.meta.env.BASE_URL;
         const redirectTo =
           redirectPath !== '/'
-            ? `${window.location.origin}${redirectPath}`
-            : `${window.location.origin}/`;
+            ? `${window.location.origin}${base}${redirectPath.replace(/^\//, '')}`
+            : `${window.location.origin}${base}`;
 
         await supabase.auth.signInWithOAuth({
           provider: 'google',

@@ -28,6 +28,7 @@ import { TrialDialog } from '@/components/auth/TrialDialog';
 import { getLevel, useAuth } from '@/contexts/AuthContext';
 import { ImageViewer } from '@/components/ImageViewer';
 import { useConversation } from '@/contexts/ConversationContext';
+import { useParametricModels } from '@/hooks/useParametricModels';
 import {
   Tooltip,
   TooltipContent,
@@ -694,10 +695,13 @@ function RetryModelSelector({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { conversation } = useConversation();
+  const { data: remoteParametricModels } = useParametricModels();
 
   // Get the appropriate model list based on conversation type and content
   const models =
-    conversation.type === 'parametric' ? PARAMETRIC_MODELS : CREATIVE_MODELS;
+    conversation.type === 'parametric'
+      ? (remoteParametricModels ?? PARAMETRIC_MODELS)
+      : CREATIVE_MODELS;
 
   const selectedModelConfig =
     models.find(
