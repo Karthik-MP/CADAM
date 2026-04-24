@@ -1,6 +1,7 @@
 -- Required extensions for GoTrue auth
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE SCHEMA IF NOT EXISTS storage;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
@@ -30,4 +31,44 @@ GRANT ALL ON SCHEMA auth TO supabase_auth_admin;
 GRANT ALL ON SCHEMA auth TO postgres;
 GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
 
+GRANT ALL ON SCHEMA storage TO supabase_storage_admin;
+GRANT ALL ON SCHEMA storage TO postgres;
+
 ALTER ROLE supabase_auth_admin SET search_path = auth;
+
+-- Pre-create GoTrue enum types in auth schema.
+-- GoTrue's add_mfa_schema migration creates these without a schema prefix,
+-- which places them in whatever search_path is active (usually public).
+-- Later migrations reference auth.factor_type explicitly and fail.
+-- Pre-creating them here in auth ensures consistency regardless of search_path.
+DO $$ BEGIN
+  CREATE TYPE auth.factor_type AS ENUM('totp', 'webauthn', 'phone');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE auth.factor_status AS ENUM('unverified', 'verified');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE auth.aal_level AS ENUM('aal1', 'aal2', 'aal3');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE auth.code_challenge_method AS ENUM('s256', 'plain');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE auth.one_time_token_type AS ENUM(
+    'confirmation_token',
+    'reauthentication_token',
+    'recovery_token',
+    'email_change_token_new',
+    'email_change_token_current',
+    'phone_change_token'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
