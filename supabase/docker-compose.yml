@@ -1,0 +1,90 @@
+version: '3.9'
+
+services:
+  kong:
+    image: kong:2.8.1
+    container_name: supabase_kong
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+    volumes:
+      - ./kong.yml:/kong.yml
+
+  auth:
+    image: public.ecr.aws/supabase/gotrue:v2.177.0
+    container_name: supabase_auth
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - ./gotrue.env
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+
+      GOTRUE_SITE_URL: https://adam.bytecrafts.in
+      API_EXTERNAL_URL: https://adam-api.bytecrafts.in
+      GOTRUE_JWT_ISSUER: https://adam-api.bytecrafts.in/auth/v1
+
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: 'true'
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: YOUR_GOOGLE_CLIENT_ID
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: YOUR_GOOGLE_SECRET
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: https://adam-api.bytecrafts.in/auth/v1/callback
+
+      GOTRUE_URI_ALLOW_LIST: https://adam.bytecrafts.in,https://adam.bytecrafts.in/*
+
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: supabase_rest
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
+      PGRST_DB_ANON_ROLE: anon
+
+  realtime:
+    image: public.ecr.aws/supabase/realtime:v2.41.3
+    container_name: supabase_realtime
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: postgres
+
+  storage:
+    image: public.ecr.aws/supabase/storage-api:v1.25.9
+    container_name: supabase_storage
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      ANON_KEY: anon
+      SERVICE_KEY: service_role
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+
+  db:
+    image: postgres:17
+    container_name: supabase_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
