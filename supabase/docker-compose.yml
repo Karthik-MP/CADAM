@@ -30,7 +30,7 @@ services:
       GOTRUE_API_PORT: 9999
 
       GOTRUE_DB_DRIVER: postgres
-      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@supabase_db:5432/postgres
 
       GOTRUE_SITE_URL: https://adam.bytecrafts.in
       API_EXTERNAL_URL: https://adam-api.bytecrafts.in
