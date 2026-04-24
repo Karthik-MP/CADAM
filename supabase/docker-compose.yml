@@ -50,7 +50,7 @@ services:
     depends_on:
       - db
     environment:
-      PGRST_DB_URI: postgres://postgres:postgres@db:5432/postgres
+      PGRST_DB_URI: postgres://postgres:postgres@supabase_db:5432/postgres
       PGRST_DB_ANON_ROLE: anon
 
   realtime:
@@ -60,7 +60,7 @@ services:
     depends_on:
       - db
     environment:
-      DB_HOST: db
+      DB_HOST: supabase_db
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
@@ -75,7 +75,7 @@ services:
     environment:
       ANON_KEY: anon
       SERVICE_KEY: service_role
-      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      DATABASE_URL: postgres://postgres:postgres@supabase_db:5432/postgres
 
   db:
     image: postgres:17
