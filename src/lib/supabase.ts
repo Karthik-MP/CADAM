@@ -5,7 +5,7 @@ const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const rawSupabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Flag used by the UI to show a helpful message instead of crashing
-export const isSupabaseConfigMissing = !rawSupabaseUrl || !rawSupabaseKey;
+export const isSupabaseConfigMissing = !rawSupabaseUrl;
 
 // Fallback values keep the client constructable so imports don't throw
 // when env vars are missing. The app should gate on isSupabaseConfigMissing

@@ -4,6 +4,5 @@ dist
 supabase
 .vscode
 .env.local
-.env
 npm-debug.log*
 .DS_Store
