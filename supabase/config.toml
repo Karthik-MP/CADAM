@@ -5,17 +5,23 @@
 project_id = "cadam"
 
 [auth]
-site_url = "https://adam.3ya.io/cadam"
+site_url = "https://adam.bytecrafts.in"
 additional_redirect_urls = [
+  "https://adam.bytecrafts.in",
+  "https://adam.bytecrafts.in/cadam",
+  "https://adam.bytecrafts.in/cadam/",
+  "https://adam.bytecrafts.in/auth/callback",
+  "https://adam.bytecrafts.in/cadam/auth/callback",
   "http://localhost:3000",
   "http://localhost:3000/cadam",
   "http://localhost:3000/cadam/",
+  "http://localhost:3000/auth/callback",
+  "http://localhost:3000/cadam/auth/callback",
   "http://127.0.0.1:3000",
   "http://127.0.0.1:3000/cadam",
   "http://127.0.0.1:3000/cadam/",
-  "https://adam.3ya.io",
-  "https://adam.3ya.io/cadam",
-  "https://adam.3ya.io/cadam/",
+  "http://127.0.0.1:3000/auth/callback",
+  "http://127.0.0.1:3000/cadam/auth/callback"
 ]
 
 [auth.email]

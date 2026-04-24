@@ -7,6 +7,31 @@ services:
       - name: auth-route
         paths:
           - /auth/v1
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - 'https://adam.bytecrafts.in'
+              methods:
+                - GET
+                - POST
+                - OPTIONS
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Accept
+                - Origin
+                - X-Requested-With
+                - x-supabase-api-version
+                - x-client-info
+                - apikey
+              exposed_headers:
+                - Authorization
+              credentials: true
+              max_age: 86400
 
   - name: rest
     url: http://rest:3000

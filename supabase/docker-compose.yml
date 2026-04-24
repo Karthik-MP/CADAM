@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     ports:
       - '8000:8000'
+      - '8001:8001'
     environment:
       KONG_DATABASE: 'off'
       KONG_DECLARATIVE_CONFIG: /kong.yml
@@ -41,6 +42,8 @@ services:
       GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: https://adam-api.bytecrafts.in/auth/v1/callback
 
       GOTRUE_URI_ALLOW_LIST: https://adam.bytecrafts.in,https://adam.bytecrafts.in/*
+    ports:
+      - '9999:9999'
 
   rest:
     image: postgrest/postgrest:v12.2.3
