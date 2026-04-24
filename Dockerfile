@@ -10,12 +10,14 @@ COPY . .
 
 ARG VITE_SUPABASE_URL=https://adam-api.bytecrafts.in
 ARG VITE_SUPABASE_ANON_KEY=""
+ARG VITE_LLM_API_URL=""
+ARG VITE_LLM_API_KEY=""
 RUN if [ -f .env.local ]; then \
             cp .env.local .env; \
         elif [ -f .env ]; then \
             echo ".env present"; \
         else \
-            printf 'VITE_SUPABASE_URL="%s"\nVITE_SUPABASE_ANON_KEY="%s"\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env; \
+            printf 'VITE_SUPABASE_URL="%s"\nVITE_SUPABASE_ANON_KEY="%s"\nVITE_LLM_API_URL="%s"\nVITE_LLM_API_KEY="%s"\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" "$VITE_LLM_API_URL" "$VITE_LLM_API_KEY" > .env; \
         fi
 
 ENV NODE_OPTIONS=--max-old-space-size=4096

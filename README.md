@@ -105,6 +105,8 @@ npm run dev
   ```
   VITE_SUPABASE_ANON_KEY="<Test Anon Key>"
   VITE_SUPABASE_URL='http://127.0.0.1:54321'
+  VITE_LLM_API_URL="https://model.3ya.io/v1"   # OpenAI-compatible LLM base URL
+  VITE_LLM_API_KEY="<LLM API Key>"              # API key for the LLM provider
   ```
 
 ### 2. Supabase Functions Environment:
@@ -153,9 +155,46 @@ npm i
 
 ### Start Supabase Services
 
+#### Option A: Using Supabase CLI (recommended)
+
+Requires Docker running and Supabase CLI installed.
+
 ```bash
 npx supabase start
 npx supabase functions serve --no-verify-jwt
+```
+
+This automatically applies all migrations in `supabase/migrations/`.
+
+#### Option B: Using Docker Compose (self-hosted)
+
+Pass frontend env vars as build args (or export them in your shell before running):
+
+```bash
+export VITE_SUPABASE_URL="https://adam-api.bytecrafts.in"
+export VITE_SUPABASE_ANON_KEY="<Anon Key>"
+export VITE_LLM_API_URL="https://model.3ya.io/v1"
+export VITE_LLM_API_KEY="<LLM API Key>"
+
+# Start all services
+docker compose up -d
+
+# Apply migrations manually after DB is healthy
+# Run each migration in order:
+docker exec -i supabase_db psql -U postgres -d postgres < supabase/migrations/00000000000000_extensions.sql
+docker exec -i supabase_db psql -U postgres -d postgres < supabase/migrations/20250830041942_initialize.sql.sql
+docker exec -i supabase_db psql -U postgres -d postgres < supabase/migrations/20260302193359_schema_update.sql
+docker exec -i supabase_db psql -U postgres -d postgres < supabase/migrations/20260303204633_token_payments.sql
+docker exec -i supabase_db psql -U postgres -d postgres < supabase/migrations/20260419120000_fix_free_tier_token_reset.sql
+docker exec -i supabase_db psql -U postgres -d postgres < supabase/migrations/20260420000000_unschedule_free_tier_cron.sql
+```
+
+> **Note:** After deleting Docker volumes (`docker compose down -v`), migrations must be re-applied. The DB does not persist schema across volume wipes.
+
+To verify migrations applied:
+
+```bash
+docker exec -it supabase_db psql -U postgres -d postgres -c "\dt public.*"
 ```
 
 ## 🛠️ Built With

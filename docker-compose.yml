@@ -4,6 +4,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL:-https://adam-api.bytecrafts.in}
+        VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY:-}
+        VITE_LLM_API_URL: ${VITE_LLM_API_URL:-}
+        VITE_LLM_API_KEY: ${VITE_LLM_API_KEY:-}
     image: cadam-frontend:latest
     container_name: cadam-frontend
     ports:
