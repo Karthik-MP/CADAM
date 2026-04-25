@@ -52,11 +52,12 @@ export function SignInView() {
   const { mutate: signInWithGoogle, isPending: isSigningInWithGoogle } =
     useMutation({
       mutationFn: async () => {
-        const base = import.meta.env.BASE_URL;
-        const redirectTo =
-          redirectPath !== '/'
-            ? `${window.location.origin}${base}${redirectPath.replace(/^\//, '')}`
-            : `${window.location.origin}${base}`;
+        const appBase = (import.meta.env.BASE_URL || '/').replace(/\/+$/, '/');
+        const path = (redirectPath || 'auth/callback').replace(/^\/+/, '');
+        const redirectTo = new URL(
+          `${appBase}${path}`,
+          window.location.origin,
+        ).toString();
 
         await supabase.auth.signInWithOAuth({
           provider: 'google',
