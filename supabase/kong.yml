@@ -87,3 +87,63 @@ services:
       - name: storage-route
         paths:
           - /storage/v1
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - 'https://adam.bytecrafts.in'
+                - 'http://localhost:3000'
+              methods:
+                - GET
+                - POST
+                - OPTIONS
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Accept
+                - Origin
+                - X-Requested-With
+                - x-supabase-api-version
+                - x-client-info
+                - apikey
+                - cache-control
+                - x-upsert
+              exposed_headers:
+                - Authorization
+              credentials: true
+              max_age: 86400
+      - name: storage-object-route
+        paths:
+          - /object
+        strip_path: false
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - 'https://adam.bytecrafts.in'
+                - 'http://localhost:3000'
+              methods:
+                - GET
+                - POST
+                - OPTIONS
+                - PUT
+                - PATCH
+                - DELETE
+              headers:
+                - Authorization
+                - Content-Type
+                - Accept
+                - Origin
+                - X-Requested-With
+                - x-supabase-api-version
+                - x-client-info
+                - apikey
+                - cache-control
+                - x-upsert
+              exposed_headers:
+                - Authorization
+              credentials: true
+              max_age: 86400
