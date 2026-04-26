@@ -8,6 +8,8 @@ services:
     ports:
       - '8000:8000'
       - '8001:8001'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       KONG_DATABASE: 'off'
       KONG_DECLARATIVE_CONFIG: /kong.yml
@@ -87,6 +89,7 @@ services:
       PGRST_JWT_SECRET: 'super-secret-jwt-token-with-at-least-32-characters-long'
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
       FILE_STORAGE_BACKEND: local
+      STORAGE_CORS_ALLOWED_ORIGINS: 'https://adam.bytecrafts.in'
     volumes:
       - storage_data:/var/lib/storage
 
